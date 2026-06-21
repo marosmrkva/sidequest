@@ -32,6 +32,7 @@ namespace Sidequest
 
         bool isCollapsed = true;
         bool isQuestEntryOpen = false;
+        Quest QuestToEdit = null;
 
         private void SetStartup(bool enable)
         {
@@ -52,16 +53,12 @@ namespace Sidequest
                 }
             }
         }
-
-        
-        
+       
         private void Timer_Tick(object sender, EventArgs e)
         {
             CheckDeadlines();
         }
-        
-        
-
+       
         private void InitializeDatabase()
         {
             using (var connection = new SqliteConnection(dbPath))
@@ -113,14 +110,10 @@ namespace Sidequest
                 }
 
                 if (sortedDeadlines.Count == 0) return;
-
-                TimeSpan span = (sortedDeadlines[0].Deadline).Subtract(DateTime.Now);
-
-                if (sortedDeadlines[0].ID == null) return;
-
                 
                 while (sortedDeadlines.Count > 0)
                 {
+                    TimeSpan span = (sortedDeadlines[0].Deadline).Subtract(DateTime.Now);
                     if (span.TotalSeconds < 0 && !sortedDeadlines[0].IsCompleted)
                     {
                         Quest overdueQuest = null;
@@ -129,24 +122,41 @@ namespace Sidequest
                             if (quest.ID == sortedDeadlines[0].ID) overdueQuest = quest;
                         }
                         if (overdueQuest != null) listQuests.Remove(overdueQuest);
-                        listOverdueQuests.Add(sortedDeadlines[0]);
+                        listOverdueQuests.Add(overdueQuest);
                         
                         span = (sortedDeadlines[0].Deadline).Subtract(DateTime.Now);
                     }
                     else break;
-                    sortedDeadlines.Remove(sortedDeadlines[0]);
-                }
-                
-                if (span.Hours <= 24)
-                {
-                    if (isCollapsed)
-                    {
-                        MainBorder.BorderBrush = new SolidColorBrush(Colors.Red);
-                        return;
-                    }
+                    sortedDeadlines.RemoveAt(0);
                 }
 
-                MainBorder.BorderBrush = (SolidColorBrush) new BrushConverter().ConvertFrom("#2a2a2a");
+                Console.WriteLine(sortedDeadlines.Count);
+
+                if (sortedDeadlines.Count > 0)
+                {
+                    int i = 0;
+                    while (i < sortedDeadlines.Count && sortedDeadlines[i].IsCompleted) i++;
+
+                    if (i >= sortedDeadlines.Count)
+                    {
+                        MainBorder.BorderBrush = (SolidColorBrush)new BrushConverter().ConvertFrom("#2a2a2a");
+                        return;
+                    }
+
+                    TimeSpan borderColorSpan = sortedDeadlines[i].Deadline.Subtract(DateTime.Now);
+
+                    if (borderColorSpan.TotalHours <= 24 && borderColorSpan.TotalHours >= 0)
+                    {
+                        if (isCollapsed)
+                        {
+                            MainBorder.BorderBrush = new SolidColorBrush(Colors.Red);
+                            return;
+                        }
+                    }
+
+                    MainBorder.BorderBrush = (SolidColorBrush)new BrushConverter().ConvertFrom("#2a2a2a");
+                }
+                    
             }
         }
 
@@ -186,7 +196,7 @@ namespace Sidequest
 
         
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void ToggleNewQuestUI(object sender, RoutedEventArgs e)
         {
             if (!isQuestEntryOpen)
             {
@@ -203,18 +213,58 @@ namespace Sidequest
                 
         }
 
+        private void ToggleEditQuestUI(object sender, RoutedEventArgs e)
+        {
+            if (!isQuestEntryOpen)
+            {
+                QuestToEdit = (sender as FrameworkElement).DataContext as Quest;
+                if (QuestToEdit == null) return;
+
+                Quest CurrentQuest;
+                NewQuestEntryTextBox.Text = QuestToEdit.QuestName;
+                NewQuestContentTextBox.Text = QuestToEdit.QuestContents;
+                NewQuestDeadlineDate.SelectedDate = QuestToEdit.Deadline.Date;
+                NewQuestDeadlineTime.Text = $"{QuestToEdit.Deadline.Hour}:{QuestToEdit.Deadline.Minute}";
+                NewQuestEntry.Visibility = Visibility.Visible;
+                isQuestEntryOpen = true;
+
+                RemoveQuest(sender, e);
+            }
+            else
+            {
+                NewQuestEntry.Visibility = Visibility.Collapsed;
+                isQuestEntryOpen = false;
+            }
+
+        }
+
         private void SaveNewQuest(object sender, RoutedEventArgs e)
         {
             string newQuestName = NewQuestEntryTextBox.Text;
             if (string.IsNullOrWhiteSpace(newQuestName)) return;
 
             DateTime newQuestDeadline;
+
             if (NewQuestDeadlineDate.SelectedDate != null)
             {
-                TimeSpan span = NewQuestDeadlineDate.SelectedDate.Value.Subtract(DateTime.Now);
+                DateTime selectedDate = NewQuestDeadlineDate.SelectedDate.Value.Date;
 
-                if (span.Hours < 0) return;
-                newQuestDeadline = NewQuestDeadlineDate.SelectedDate.Value;
+                if (TimeSpan.TryParse(NewQuestDeadlineTime.Text, out TimeSpan selectedTime))
+                {
+                    newQuestDeadline = selectedDate.Add(selectedTime);
+                }
+                else
+                {
+                    MessageBox.Show("Invalid time format, use hh:mm format.");
+                    return;
+                }
+
+                if (newQuestDeadline < DateTime.Now)
+                {
+                    MessageBox.Show("Invalid deadline, you can't schedule a quest in the past.");
+                    return;
+                }
+
                 
             }
             else
@@ -274,6 +324,8 @@ namespace Sidequest
 
             listQuests.Remove(QuestToFinish);
             listFinishedQuests.Add(QuestToFinish);
+
+            CheckDeadlines();
         }
 
         private void FinishOverdueQuest(object sender, RoutedEventArgs e)

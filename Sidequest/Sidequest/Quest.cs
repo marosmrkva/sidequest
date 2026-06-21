@@ -14,5 +14,7 @@ namespace Sidequest
         public bool IsCompleted = false;
         public DateTime Deadline { get; set; }
 
+        public TimeOnly TimeEstimate { get; set; }
+
     }
 }
