@@ -9,6 +9,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using Xceed.Wpf.Toolkit;
 
 namespace Sidequest
 {
@@ -65,18 +66,32 @@ namespace Sidequest
             {
                 connection.Open();
 
-                var command = connection.CreateCommand();
+                var pragmaCommand = connection.CreateCommand();
+                pragmaCommand.CommandText = @"PRAGMA foreign_keys = ON;";
+                pragmaCommand.ExecuteNonQuery();
 
+                var command = connection.CreateCommand();
                 command.CommandText = @"
                     CREATE TABLE IF NOT EXISTS Quests (
                         Id INTEGER PRIMARY KEY AUTOINCREMENT,
                         QuestName TEXT NOT NULL,
                         Deadline TEXT,
                         Content TEXT,
-                        Status BOOLEAN
+                        Status BOOLEAN,
+                        TimeEstimate TEXT
                     )";
-
                 command.ExecuteNonQuery();
+
+                var depCommand = connection.CreateCommand();
+                depCommand.CommandText = @"
+                    CREATE TABLE IF NOT EXISTS QuestDependencies (
+                        QuestId INTEGER,
+                        PrerequisiteId INTEGER,
+                        PRIMARY KEY (QuestId, PrerequisiteId),
+                        FOREIGN KEY (QuestId) REFERENCES Quests (Id) ON DELETE CASCADE,
+                        FOREIGN KEY (PrerequisiteId) REFERENCES Quests (Id) ON DELETE CASCADE
+                    )";
+                depCommand.ExecuteNonQuery();
             }
         }
 
@@ -92,7 +107,7 @@ namespace Sidequest
 
                 var command = connection.CreateCommand();
 
-                command.CommandText = "SELECT Id, QuestName, Deadline, Content, Status FROM Quests ORDER BY Deadline ASC";
+                command.CommandText = "SELECT Id, QuestName, Deadline, Content, Status, TimeEstimate FROM Quests ORDER BY Deadline ASC";
 
                 using (var reader = command.ExecuteReader())
                 {
@@ -104,6 +119,7 @@ namespace Sidequest
                         tempQuest.Deadline = Convert.ToDateTime(reader.GetString(2));
                         tempQuest.QuestContents = reader.GetString(3);
                         tempQuest.IsCompleted = reader.GetBoolean(4);
+                        tempQuest.TimeEstimate = TimeOnly.Parse(reader.GetString(5));
 
                         sortedDeadlines.Add(tempQuest);
                     }
@@ -172,7 +188,7 @@ namespace Sidequest
 
                 var command = connection.CreateCommand();
 
-                command.CommandText = "SELECT Id, QuestName, Deadline, Content, Status FROM Quests ORDER BY Deadline ASC";
+                command.CommandText = "SELECT Id, QuestName, Deadline, Content, Status, TimeEstimate FROM Quests ORDER BY Deadline ASC";
 
                 using (var reader = command.ExecuteReader())
                 {
@@ -186,6 +202,7 @@ namespace Sidequest
                         loadedQuest.Deadline = Convert.ToDateTime(deadlineString);
                         loadedQuest.QuestContents = reader.GetString(3);
                         loadedQuest.IsCompleted = reader.GetBoolean(4);
+                        loadedQuest.TimeEstimate = TimeOnly.Parse(reader.GetString(5));
 
                         if (!loadedQuest.IsCompleted) listQuests.Add(loadedQuest);
                         else listFinishedQuests.Add(loadedQuest);
@@ -202,6 +219,10 @@ namespace Sidequest
             {
                 NewQuestEntryTextBox.Text = "";
                 NewQuestContentTextBox.Text = "";
+
+                QuestDependenciesComboBox.ItemsSource = listQuests;
+                QuestDependenciesComboBox.SelectedItems.Clear();
+
                 NewQuestEntry.Visibility = Visibility.Visible;
                 isQuestEntryOpen = true;
             }
@@ -220,23 +241,45 @@ namespace Sidequest
                 QuestToEdit = (sender as FrameworkElement).DataContext as Quest;
                 if (QuestToEdit == null) return;
 
+                var availableDependencies = new List<Quest>();
+                foreach (var q in listQuests)
+                {
+                    if (q.ID != QuestToEdit.ID)
+                    {
+                        availableDependencies.Add(q);
+                    }
+                }
+
+                QuestDependenciesComboBox.ItemsSource = availableDependencies;
+                QuestDependenciesComboBox.SelectedItems.Clear();
+
+
                 Quest CurrentQuest;
                 NewQuestEntryTextBox.Text = QuestToEdit.QuestName;
                 NewQuestContentTextBox.Text = QuestToEdit.QuestContents;
                 NewQuestDeadlineDate.SelectedDate = QuestToEdit.Deadline.Date;
-                NewQuestDeadlineTime.Text = $"{QuestToEdit.Deadline.Hour}:{QuestToEdit.Deadline.Minute}";
+
+                NewQuestDeadlineTime.Text = QuestToEdit.Deadline.ToString("HH:mm");
+                NewQuestTimeEstimate.Text = QuestToEdit.TimeEstimate.ToString("HH:mm");
+
                 NewQuestEntry.Visibility = Visibility.Visible;
                 isQuestEntryOpen = true;
-
-                RemoveQuest(sender, e);
             }
             else
             {
                 NewQuestEntry.Visibility = Visibility.Collapsed;
                 isQuestEntryOpen = false;
+                QuestToEdit = null;
             }
 
         }
+
+        //=================================================================================================================
+        //=================================================================================================================
+        //=================================================================================================================
+        //=================================================================================================================
+        //=================================================================================================================
+        //=================================================================================================================
 
         private void SaveNewQuest(object sender, RoutedEventArgs e)
         {
@@ -255,13 +298,13 @@ namespace Sidequest
                 }
                 else
                 {
-                    MessageBox.Show("Invalid time format, use hh:mm format.");
+                    System.Windows.MessageBox.Show("Invalid time format, use hh:mm format.");
                     return;
                 }
 
                 if (newQuestDeadline < DateTime.Now)
                 {
-                    MessageBox.Show("Invalid deadline, you can't schedule a quest in the past.");
+                    System.Windows.MessageBox.Show("Invalid deadline, you can't schedule a quest in the past.");
                     return;
                 }
 
@@ -272,41 +315,106 @@ namespace Sidequest
                 newQuestDeadline = DateTime.Now.AddDays(1);
             }
 
+            if (!TimeOnly.TryParse(NewQuestTimeEstimate.Text, out TimeOnly selectedTimeEstimate))
+            {
+                System.Windows.MessageBox.Show("Invalid time format, use hh:mm format.");
+                return;
+            }
+
             string newQuestContent = NewQuestContentTextBox.Text;
 
             Quest newQuest = new Quest();
             newQuest.QuestName = newQuestName;
             newQuest.Deadline = newQuestDeadline;
             newQuest.QuestContents = newQuestContent;
+            newQuest.TimeEstimate = selectedTimeEstimate;
             listQuests.Add(newQuest);
 
             using (var connection = new SqliteConnection(dbPath))
             {
                 connection.Open();
+
+                var pragmaCommand = connection.CreateCommand();
+                pragmaCommand.CommandText = @"PRAGMA foreign_keys = ON;";
+                pragmaCommand.ExecuteNonQuery();
+
                 var command = connection.CreateCommand();
-                command.CommandText = "INSERT INTO Quests (QuestName, Deadline, Content, Status) VALUES (@name, @date, @content, @status)";
+                long currQuestId = 0;
 
-                command.Parameters.AddWithValue("@name", newQuestName);
-                command.Parameters.AddWithValue("@date", newQuestDeadline.ToString("s"));
-                command.Parameters.AddWithValue("@content", newQuestContent);
-                command.Parameters.AddWithValue("@status", false);
+                if (QuestToEdit == null) 
+                {
+                    command.CommandText = "INSERT INTO Quests (QuestName, Deadline, Content, Status, TimeEstimate) VALUES (@name, @date, @content, @status, @estimate); SELECT last_insert_rowid();";
+                    command.Parameters.AddWithValue("@name", newQuestName);
+                    command.Parameters.AddWithValue("@date", newQuestDeadline.ToString("s"));
+                    command.Parameters.AddWithValue("@content", newQuestContent);
+                    command.Parameters.AddWithValue("@status", false);
+                    command.Parameters.AddWithValue("@estimate", selectedTimeEstimate);
 
-                command.ExecuteNonQuery();
+                    currQuestId = (long)command.ExecuteScalar();
+                    newQuest.ID = (int)currQuestId;
+                }
+                else
+                {
+                    command.CommandText = "UPDATE Quests SET QuestName = @name, Deadline = @date, Content = @content, TimeEstimate = @estimate WHERE Id = @id";
+                    command.Parameters.AddWithValue("@id", QuestToEdit.ID);
+                    command.Parameters.AddWithValue("@name", newQuestName);
+                    command.Parameters.AddWithValue("@date", newQuestDeadline);
+                    command.Parameters.AddWithValue("@content", newQuestContent);
+                    command.Parameters.AddWithValue("@estimate", selectedTimeEstimate);
+
+                    command.ExecuteNonQuery();
+                    currQuestId = QuestToEdit.ID;
+
+                    var deleteDepsCommand = connection.CreateCommand();
+                    deleteDepsCommand.CommandText = @"DELETE FROM QuestDependencies WHERE QuestId = @id";
+                    deleteDepsCommand.Parameters.AddWithValue("@id", currQuestId);
+                    deleteDepsCommand.ExecuteNonQuery();
+                }
+
+
+                if (QuestDependenciesComboBox.SelectedItems != null)
+                {
+                    foreach (var item in QuestDependenciesComboBox.SelectedItems)
+                    {
+                        if (item is Quest prereqQuest)
+                        {
+                            var depCommand = connection.CreateCommand();
+                            depCommand.CommandText = @"INSERT INTO QuestDependencies (QuestId, PrerequisiteId) VALUES (@qId, @pId)";
+                            depCommand.Parameters.AddWithValue("@qId", currQuestId);
+                            depCommand.Parameters.AddWithValue("@pId", prereqQuest.ID);
+                            depCommand.ExecuteNonQuery();
+
+                            if (QuestToEdit == null) newQuest.PrerequisitesIds.Add(prereqQuest.ID);
+                        }
+                    }
+                }
+
             }
 
+            QuestToEdit = null;
             NewQuestEntryTextBox.Text = "";
             NewQuestContentTextBox.Text = "";
             NewQuestDeadlineDate.SelectedDate = null;
+            QuestDependenciesComboBox.SelectedItems.Clear();
 
             NewQuestEntry.Visibility = Visibility.Collapsed;
+            isQuestEntryOpen = false;
 
             CheckDeadlines();
         }
 
+
+        //=================================================================================================================
+        //=================================================================================================================
+        //=================================================================================================================
+        //=================================================================================================================
+        //=================================================================================================================
+
+
         private void FinishQuest(object sender, RoutedEventArgs e)
         {
             Button pressedButton = sender as Button;
-            Quest QuestToFinish = pressedButton.DataContext as Quest;
+            Quest QuestToFinish = pressedButton.DataContext as Quest; 
 
             if (QuestToFinish == null) return;
 
@@ -379,7 +487,7 @@ namespace Sidequest
         {
             isMouseInside = true;
             isCollapsed = false;
-            animateWindow(300);
+            animateWindow(400);
             
         }
 
@@ -422,7 +530,7 @@ namespace Sidequest
             animateProperty(Window.LeftProperty, _anchorRight - targetSize);
             animateProperty(Window.TopProperty, _anchorBottom - targetSize);
 
-            if (canResize && targetSize == 300) MainGrid.Visibility = Visibility.Visible;
+            if (canResize && targetSize == 400) MainGrid.Visibility = Visibility.Visible;
 
             Thread.Sleep(250);
         }

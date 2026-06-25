@@ -10,11 +10,9 @@ namespace Sidequest
         public int ID { get; set; }
         public string QuestName { get; set; }
         public string QuestContents { get; set; }
-
         public bool IsCompleted = false;
         public DateTime Deadline { get; set; }
-
         public TimeOnly TimeEstimate { get; set; }
-
+        public List<int> PrerequisitesIds { get; set; } = new List<int>();
     }
 }
