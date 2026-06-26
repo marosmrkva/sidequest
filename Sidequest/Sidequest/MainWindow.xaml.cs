@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using System.Dynamic;
 using System.Windows;
 using System.Windows.Controls;
@@ -176,6 +177,71 @@ namespace Sidequest
             }
         }
 
+        private bool HasCycle(int node, Dictionary<int, List<int>> graph, HashSet<int> visited, HashSet<int> stack)
+        {
+            if (stack.Contains(node)) return true;
+            if (visited.Contains(node)) return false;
+
+            visited.Add(node);
+            stack.Add(node);
+
+            if (graph.ContainsKey(node))
+            {
+                foreach (var neighbor in graph[node])
+                {
+                    if (HasCycle(neighbor, graph, visited, stack))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            stack.Remove(node);
+            return false;
+        }
+
+        private bool CheckForCycles(int questToEditId, List<int> newDependencies)
+        {
+            var QuestDAG = new Dictionary<int, List<int>>();
+
+            using (var connection = new SqliteConnection(dbPath))
+            {
+                connection.Open();
+                var command = connection.CreateCommand();
+
+                command.CommandText = "SELECT QuestId, PrerequisiteId FROM QuestDependencies";
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        int qId = reader.GetInt32(0);
+                        int pId = reader.GetInt32(1);
+
+                        if (!QuestDAG.ContainsKey(qId))
+                        {
+                            QuestDAG[qId] = new List<int>();
+                            QuestDAG[qId].Add(pId);
+                        }
+                    }
+                }
+            }
+            QuestDAG[questToEditId] = newDependencies;
+
+            var visited = new HashSet<int>();
+            var stack = new HashSet<int>();
+
+            foreach (var node in QuestDAG.Keys)
+            {
+                if (HasCycle(node, QuestDAG, visited, stack))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+
         private void LoadQuestsFromDatabase()
         {
             listQuests.Clear();
@@ -274,13 +340,6 @@ namespace Sidequest
 
         }
 
-        //=================================================================================================================
-        //=================================================================================================================
-        //=================================================================================================================
-        //=================================================================================================================
-        //=================================================================================================================
-        //=================================================================================================================
-
         private void SaveNewQuest(object sender, RoutedEventArgs e)
         {
             string newQuestName = NewQuestEntryTextBox.Text;
@@ -355,6 +414,23 @@ namespace Sidequest
                 }
                 else
                 {
+                    List<int> newDependencies = new List<int>();
+
+                    if (QuestDependenciesComboBox.SelectedItems != null)
+                    {
+                        foreach (var item in QuestDependenciesComboBox.SelectedItems)
+                        {
+                            if (item is Quest prereq) newDependencies.Add(prereq.ID);
+                        }
+                    }
+
+                    if (CheckForCycles(QuestToEdit.ID, newDependencies))
+                    {
+                        System.Windows.MessageBox.Show("Invalid dependencies create a cycle, fix to continue.");
+                        return;
+                    }
+
+
                     command.CommandText = "UPDATE Quests SET QuestName = @name, Deadline = @date, Content = @content, TimeEstimate = @estimate WHERE Id = @id";
                     command.Parameters.AddWithValue("@id", QuestToEdit.ID);
                     command.Parameters.AddWithValue("@name", newQuestName);
@@ -402,14 +478,6 @@ namespace Sidequest
 
             CheckDeadlines();
         }
-
-
-        //=================================================================================================================
-        //=================================================================================================================
-        //=================================================================================================================
-        //=================================================================================================================
-        //=================================================================================================================
-
 
         private void FinishQuest(object sender, RoutedEventArgs e)
         {
