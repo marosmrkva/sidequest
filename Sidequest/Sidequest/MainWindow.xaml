@@ -136,167 +136,234 @@
         Background="#121212"
         >
 
-        <Grid x:Name="MainGrid">
+        <Grid>
 
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+            <Grid x:Name="SettingsGrid"
+                  Visibility="Collapsed"
+                  Background="#121212">
 
-            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,10,0,10">
-                <Button x:Name="ActiveQuestsButton" Style="{Binding}" Click="ShowActive" 
-                        Content="Active" FontFamily="Arial" FontSize="16" FontWeight="Bold" 
-                        Foreground="#6e6e6e" Background="#121212" BorderBrush="#121212" 
-                        BorderThickness="3,3,3,0" Padding="5,0,5,0"/>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                <Button x:Name="OverdueQuestsButton" Style="{Binding}" Click="ShowOverdue" 
-                        Content="Overdue" FontFamily="Arial" FontSize="16" FontWeight="Bold" 
-                        Foreground="#6e6e6e" Background="#121212" BorderBrush="#121212" 
-                        BorderThickness="3,3,3,0" Margin="10,0,0,0" Padding="5,0,5,0"/>
+                <Grid Grid.Row="0" Margin="10,10,10,10">
+                    <Button Style="{Binding}" Background="#2a2a2a" BorderThickness="0" Cursor="Hand" 
+                            Width="150" Height="25" Click="StartPlanner">
+                        <TextBlock Text="Run Quest Planner" Foreground="#a0a0a0" FontWeight="Bold"/>
+                    </Button>
 
-                <Button x:Name="FinishedQuestsButton" Style="{Binding}" Click="ShowFinished" 
-                        Content="Finished" FontFamily="Arial" FontSize="16" FontWeight="Bold" 
-                        Foreground="#6e6e6e" Background="#121212" BorderBrush="#121212" 
-                        BorderThickness="3,3,3,0" Margin="10,0,0,0" Padding="5,0,5,0"/>
-            </StackPanel>
+                    <Button Style="{DynamicResource ButtonStyle1}" Background="#a0a0a0" BorderThickness="0" Cursor="Hand"
+                            Height="15" Width="15" HorizontalAlignment="Right" Margin="0,0,5,0" Click="ToggleSettings">
+                        <Path Data="M0,7 H14 M7,0 V14" Stroke="Black" StrokeThickness="2" 
+                              HorizontalAlignment="Center" VerticalAlignment="Top" Width="5" Height="5"/>
+                    </Button>
+                </Grid>
 
-            <Button Grid.Row="0" Style="{DynamicResource ButtonStyle1}" HorizontalAlignment="Right" VerticalAlignment="Top"
-                    Margin="0,15,15,0" Background="#2a2a2a" BorderThickness="0" Cursor="Hand"
-                    Height="15" Width="15" Click="Button_Exit">
-                <Path Data="M0,7 H14 M7,0 V14" Stroke="Black" StrokeThickness="2" 
-                      HorizontalAlignment="Center" VerticalAlignment="Center" Width="5" Height="5" />
-            </Button>
+                <ListBox x:Name="PlannedQuests" Grid.Row="1" ItemsSource="{Binding dayPlan}"
+                         Margin="10,0,10,10" BorderBrush="#121212" Background="#121212"
+                         ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollBarVisibility="Hidden">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,0,0,12" Background="Transparent">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-            <ListBox x:Name="ActiveQuests" Grid.Row="1" ItemsSource="{Binding listQuests}"
-                     Margin="10,0,10,10" BorderBrush="#121212" Background="#121212"
-                     ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollBarVisibility="Hidden">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Margin="0,0,0,12" Background="Transparent">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding QuestName}" Foreground="White" FontWeight="Bold" FontSize="14" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding Deadline}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
+                                    <TextBlock x:Name="QuestTimeEstimateTextBox" Visibility="Collapsed" Text="{Binding TimeEstimate, StringFormat='Estimated time: {0:HH:mm}'}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
+                                    <TextBlock x:Name="QuestContentsTextBox" Visibility="Collapsed" Text="{Binding QuestContents}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
+                                </StackPanel>
 
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding QuestName}" Foreground="White" FontWeight="Bold" FontSize="14" TextWrapping="Wrap"/>
-                                <TextBlock Text="{Binding Deadline}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
-                                <TextBlock x:Name="QuestTimeEstimateTextBox" Visibility="Collapsed" Text="{Binding TimeEstimate, StringFormat='Estimated time: {0:HH:mm}'}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
-                                <TextBlock x:Name="QuestContentsTextBox" Visibility="Collapsed" Text="{Binding QuestContents}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Style="{DynamicResource ButtonStyle1}" Width="25" Height="25" Margin="10,0,0,0"
+                                            Background="#6e6e6e" Cursor="Hand" VerticalAlignment="Center" Click="FinishQuest">
+                                        <TextBlock Text="✓" Foreground="LightGreen" FontWeight="Bold" Margin="0,-2,0,0"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                                    <Setter TargetName="QuestContentsTextBox" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="QuestTimeEstimateTextBox" Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <Button Grid.Row="2" Style="{Binding}" Background="#1a1a1a" BorderThickness="0" Cursor="Hand"
+                        Width="100" Height="25" Margin="0,0,0,15" Click="QuitApp">
+                    <TextBlock Text="Exit App" Foreground="#6e6e6e" FontWeight="Bold"/>
+                </Button>
+            </Grid>
+            
+                <Grid x:Name="MainGrid">
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,10,0,10">
+                        <Button x:Name="ActiveQuestsButton" Style="{Binding}" Click="ShowActive" 
+                                Content="Active" FontFamily="Arial" FontSize="16" FontWeight="Bold" 
+                                Foreground="#6e6e6e" Background="#121212" BorderBrush="#121212" 
+                                BorderThickness="3,3,3,0" Padding="5,0,5,0"/>
+
+                        <Button x:Name="OverdueQuestsButton" Style="{Binding}" Click="ShowOverdue" 
+                                Content="Overdue" FontFamily="Arial" FontSize="16" FontWeight="Bold" 
+                                Foreground="#6e6e6e" Background="#121212" BorderBrush="#121212" 
+                                BorderThickness="3,3,3,0" Margin="10,0,0,0" Padding="5,0,5,0"/>
+
+                        <Button x:Name="FinishedQuestsButton" Style="{Binding}" Click="ShowFinished" 
+                                Content="Finished" FontFamily="Arial" FontSize="16" FontWeight="Bold" 
+                                Foreground="#6e6e6e" Background="#121212" BorderBrush="#121212" 
+                                BorderThickness="3,3,3,0" Margin="10,0,0,0" Padding="5,0,5,0"/>
+                    </StackPanel>
+
+                    <Button Grid.Row="0" Style="{DynamicResource ButtonStyle1}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                            Margin="0,15,15,0" Background="#a0a0a0" BorderThickness="0" Cursor="Hand"
+                            Height="15" Width="15" Click="ToggleSettings">
+                        <Path Data="M0,7 H14 M7,0 V14" Stroke="Black" StrokeThickness="2" 
+                              HorizontalAlignment="Center" VerticalAlignment="Center" Width="5" Height="5" />
+                    </Button>
+
+                    <ListBox x:Name="ActiveQuests" Grid.Row="1" ItemsSource="{Binding listQuests}"
+                             Margin="10,0,10,10" BorderBrush="#121212" Background="#121212"
+                             ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollBarVisibility="Hidden">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,12" Background="Transparent">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding QuestName}" Foreground="White" FontWeight="Bold" FontSize="14" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Deadline}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
+                                        <TextBlock x:Name="QuestTimeEstimateTextBox" Visibility="Collapsed" Text="{Binding TimeEstimate, StringFormat='Estimated time: {0:HH:mm}'}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
+                                        <TextBlock x:Name="QuestContentsTextBox" Visibility="Collapsed" Text="{Binding QuestContents}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
                                 
-                            </StackPanel>
+                                    </StackPanel>
 
-                            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <Button Style="{DynamicResource ButtonStyle1}" Width="25" Height="25" Margin="10,0,0,0"
-                                        Background="#6e6e6e" Cursor="Hand" VerticalAlignment="Center" Click="RemoveQuest">
-                                    <TextBlock Text="×" Foreground="Red" FontWeight="Bold" Margin="0,-2,0,0"/>
-                                </Button>
-                                <Button Style="{DynamicResource ButtonStyle1}" Width="25" Height="25" Margin="10,0,0,0"
-                                        Background="#6e6e6e" Cursor="Hand" VerticalAlignment="Center" Click="FinishQuest">
-                                    <TextBlock Text="✓" Foreground="LightGreen" FontWeight="Bold" Margin="0,-2,0,0"/>
-                                </Button>
-                                <Button Style="{DynamicResource ButtonStyle1}" Width="50" Height="25" Margin="10,0,0,0"
-                                        Background="#6e6e6e" Cursor="Hand" VerticalAlignment="Center" Click="ToggleEditQuestUI">
-                                    <TextBlock Text="Edit" Foreground="#2a2a2a" FontWeight="Bold" Margin="0,-2,0,0"/>
-                                </Button>
-                            </StackPanel>
-                        </Grid>
-                        <DataTemplate.Triggers>
-                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
-                                <Setter TargetName="QuestContentsTextBox" Property="Visibility" Value="Visible"/>
-                                <Setter TargetName="QuestTimeEstimateTextBox" Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </DataTemplate.Triggers>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <Button Style="{DynamicResource ButtonStyle1}" Width="25" Height="25" Margin="10,0,0,0"
+                                                Background="#6e6e6e" Cursor="Hand" VerticalAlignment="Center" Click="RemoveQuest">
+                                            <TextBlock Text="×" Foreground="Red" FontWeight="Bold" Margin="0,-2,0,0"/>
+                                        </Button>
+                                        <Button Style="{DynamicResource ButtonStyle1}" Width="25" Height="25" Margin="10,0,0,0"
+                                                Background="#6e6e6e" Cursor="Hand" VerticalAlignment="Center" Click="FinishQuest">
+                                            <TextBlock Text="✓" Foreground="LightGreen" FontWeight="Bold" Margin="0,-2,0,0"/>
+                                        </Button>
+                                        <Button Style="{DynamicResource ButtonStyle1}" Width="50" Height="25" Margin="10,0,0,0"
+                                                Background="#6e6e6e" Cursor="Hand" VerticalAlignment="Center" Click="ToggleEditQuestUI">
+                                            <TextBlock Text="Edit" Foreground="#2a2a2a" FontWeight="Bold" Margin="0,-2,0,0"/>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                                        <Setter TargetName="QuestContentsTextBox" Property="Visibility" Value="Visible"/>
+                                        <Setter TargetName="QuestTimeEstimateTextBox" Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
 
-            <ListBox x:Name="FinishedQuests" Grid.Row="1" ItemsSource="{Binding listFinishedQuests}"
-                     Visibility="Collapsed" Margin="10,0,10,10" BorderBrush="#121212" Background="#121212"
-                     ScrollViewer.VerticalScrollBarVisibility="Hidden">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Margin="0,0,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding QuestName}" Foreground="White" FontWeight="Bold" FontSize="14" TextWrapping="Wrap"/>
-                                <TextBlock Text="{Binding Deadline}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
-                            </StackPanel>
-                            <Button Grid.Column="1" Style="{DynamicResource ButtonStyle1}" Width="25" Height="25" Margin="10,0,0,0"
-                                    Background="#6e6e6e" Cursor="Hand" VerticalAlignment="Center" Click="RemoveQuest">
-                                <TextBlock Text="×" Foreground="Red" FontWeight="Bold" Margin="0,-2,0,0"/>
-                            </Button>
-                        </Grid>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+                    <ListBox x:Name="FinishedQuests" Grid.Row="1" ItemsSource="{Binding listFinishedQuests}"
+                             Visibility="Collapsed" Margin="10,0,10,10" BorderBrush="#121212" Background="#121212"
+                             ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding QuestName}" Foreground="White" FontWeight="Bold" FontSize="14" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Deadline}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Style="{DynamicResource ButtonStyle1}" Width="25" Height="25" Margin="10,0,0,0"
+                                            Background="#6e6e6e" Cursor="Hand" VerticalAlignment="Center" Click="RemoveQuest">
+                                        <TextBlock Text="×" Foreground="Red" FontWeight="Bold" Margin="0,-2,0,0"/>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
 
-            <ListBox x:Name="OverdueQuests" Grid.Row="1" ItemsSource="{Binding listOverdueQuests}"
-                     Visibility="Collapsed" Margin="10,0,10,10" BorderBrush="#121212" Background="#121212"
-                     ScrollViewer.VerticalScrollBarVisibility="Hidden">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Margin="0,0,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding QuestName}" Foreground="White" FontWeight="Bold" FontSize="14" TextWrapping="Wrap"/>
-                                <TextBlock Text="{Binding Deadline}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
-                            </StackPanel>
-                            <Button Grid.Column="1" Style="{DynamicResource ButtonStyle1}" Width="25" Height="25" Margin="10,0,0,0"
-                                    Background="#6e6e6e" Cursor="Hand" VerticalAlignment="Center" Click="RemoveQuest">
-                                <TextBlock Text="×" Foreground="Red" FontWeight="Bold" Margin="0,-2,0,0"/>
-                            </Button>
-                            <Button Grid.Column="1" Style="{DynamicResource ButtonStyle1}" Width="25" Height="25" Margin="45,0,0,0"
-                                    Background="#6e6e6e" Cursor="Hand" VerticalAlignment="Center" Click="FinishOverdueQuest">
-                                <TextBlock Text="✓" Foreground="LightGreen" FontWeight="Bold" Margin="0,-2,0,0"/>
-                            </Button>
-                        </Grid>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+                    <ListBox x:Name="OverdueQuests" Grid.Row="1" ItemsSource="{Binding listOverdueQuests}"
+                             Visibility="Collapsed" Margin="10,0,10,10" BorderBrush="#121212" Background="#121212"
+                             ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding QuestName}" Foreground="White" FontWeight="Bold" FontSize="14" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Deadline}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Style="{DynamicResource ButtonStyle1}" Width="25" Height="25" Margin="10,0,0,0"
+                                            Background="#6e6e6e" Cursor="Hand" VerticalAlignment="Center" Click="RemoveQuest">
+                                        <TextBlock Text="×" Foreground="Red" FontWeight="Bold" Margin="0,-2,0,0"/>
+                                    </Button>
+                                    <Button Grid.Column="1" Style="{DynamicResource ButtonStyle1}" Width="25" Height="25" Margin="45,0,0,0"
+                                            Background="#6e6e6e" Cursor="Hand" VerticalAlignment="Center" Click="FinishOverdueQuest">
+                                        <TextBlock Text="✓" Foreground="LightGreen" FontWeight="Bold" Margin="0,-2,0,0"/>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
 
-            <StackPanel x:Name="NewQuestEntry" Grid.Row="1" Visibility="Collapsed"
-                        HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,20">
-                <TextBox x:Name="NewQuestEntryTextBox" Width="300" Background="#121212" Foreground="#a0a0a0" Margin="0,0,0,5"/>
-                <TextBox x:Name="NewQuestContentTextBox" Width="300" Height="30" Background="#121212" Foreground="White" Margin="0,0,0,5"/>
-                <StackPanel Orientation="Horizontal" Margin="0,5,0,5" HorizontalAlignment="Center">
-                    <DatePicker x:Name="NewQuestDeadlineDate" Width="100"/>
-                    <TextBox x:Name="NewQuestDeadlineTime" Width="45" Text="23:59" Margin="5,0,0,0" Background="#121212" 
-                             Foreground="#a0a0a0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
-                             BorderBrush="#707070" BorderThickness="1"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <TextBlock Text="Estimated time:" Foreground ="#a0a0a0" VerticalAlignment="Center"/>
-                    <TextBox x:Name="NewQuestTimeEstimate" Width="45" Text="01:00" Margin="5,0,0,5" Background="#121212" 
-                             Foreground="#a0a0a0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
-                             BorderBrush="#707070" BorderThickness="1"/>
-                </StackPanel>
+                    <StackPanel x:Name="NewQuestEntry" Grid.Row="1" Visibility="Collapsed"
+                                HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,20">
+                        <TextBox x:Name="NewQuestEntryTextBox" Width="300" Background="#121212" Foreground="#a0a0a0" Margin="0,0,0,5"/>
+                        <TextBox x:Name="NewQuestContentTextBox" Width="300" Height="30" Background="#121212" Foreground="White" Margin="0,0,0,5"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,5" HorizontalAlignment="Center">
+                            <DatePicker x:Name="NewQuestDeadlineDate" Width="100"/>
+                            <TextBox x:Name="NewQuestDeadlineTime" Width="45" Text="23:59" Margin="5,0,0,0" Background="#121212" 
+                                     Foreground="#a0a0a0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                                     BorderBrush="#707070" BorderThickness="1"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="Estimated time:" Foreground ="#a0a0a0" VerticalAlignment="Center"/>
+                            <TextBox x:Name="NewQuestTimeEstimate" Width="45" Text="01:00" Margin="5,0,0,5" Background="#121212" 
+                                     Foreground="#a0a0a0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                                     BorderBrush="#707070" BorderThickness="1"/>
+                        </StackPanel>
 
-                <TextBlock Text="Dependencies (Waits for):" Foreground="#a0a0a0" HorizontalAlignment="Left" Margin="0,5,0,0" FontSize="12"/>
-                <xctk:CheckComboBox x:Name="QuestDependenciesComboBox"
-                                    Width="300"
-                                    Margin="0,2,0,15"
-                                    DisplayMemberPath="QuestName"
-                                    Background="#121212"
-                                    Foreground="#a0a0a0"
-                    />
+                        <TextBlock Text="Dependencies (Waits for):" Foreground="#a0a0a0" HorizontalAlignment="Left" Margin="0,5,0,0" FontSize="12"/>
+                        <xctk:CheckComboBox x:Name="QuestDependenciesComboBox"
+                                            Width="300"
+                                            Margin="0,2,0,15"
+                                            DisplayMemberPath="QuestName"
+                                            Background="#121212"
+                                            Foreground="#a0a0a0"
+                            />
 
-                <Button Content="Save" Click="SaveNewQuest" Width="50" Background="#6e6e6e" Foreground="White" FontWeight="Bold"/>
-            </StackPanel>
+                        <Button Style="{Binding}" Content="Save" Click="SaveNewQuest" Width="50" Background="#6e6e6e" Foreground="#121212" FontWeight="Bold"/>
+                    </StackPanel>
 
-            <Button Grid.Row="1" Style="{DynamicResource ButtonStyle1}" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                    Margin="0,0,15,15" Background="#6e6e6e" BorderThickness="0" Cursor="Hand" Height="35" Width="35" 
-                    Click="ToggleNewQuestUI">
-                <Path Data="M0,7 H14 M7,0 V14" Stroke="Black" StrokeThickness="3" 
-                      HorizontalAlignment="Center" VerticalAlignment="Center" Width="14" Height="14" />
-            </Button>
+                    <Button Grid.Row="1" Style="{DynamicResource ButtonStyle1}" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                            Margin="0,0,15,15" Background="#6e6e6e" BorderThickness="0" Cursor="Hand" Height="35" Width="35" 
+                            Click="ToggleNewQuestUI">
+                        <Path Data="M0,7 H14 M7,0 V14" Stroke="Black" StrokeThickness="3" 
+                              HorizontalAlignment="Center" VerticalAlignment="Center" Width="14" Height="14" />
+                    </Button>
 
+                </Grid>
         </Grid>
 
     </Border>

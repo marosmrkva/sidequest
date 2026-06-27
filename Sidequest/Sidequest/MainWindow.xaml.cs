@@ -11,6 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Xceed.Wpf.Toolkit;
+using System;
 
 namespace Sidequest
 {
@@ -21,6 +22,7 @@ namespace Sidequest
         public ObservableCollection<Quest> listQuests { get; set; }
         public ObservableCollection<Quest> listFinishedQuests { get; set; }
         public ObservableCollection<Quest> listOverdueQuests { get; set; }
+        public ObservableCollection<Quest> dayPlan { get; set; }
 
         public bool isAnimating = false;
         public bool canResize = false;
@@ -34,6 +36,7 @@ namespace Sidequest
 
         bool isCollapsed = true;
         bool isQuestEntryOpen = false;
+        bool areSettingsOpen = false;
         Quest QuestToEdit = null;
 
         private void SetStartup(bool enable)
@@ -555,8 +558,7 @@ namespace Sidequest
         {
             isMouseInside = true;
             isCollapsed = false;
-            animateWindow(400);
-            
+            animateWindow(400);   
         }
 
         private async void Window_Collapse(object sender, MouseEventArgs e)
@@ -637,7 +639,151 @@ namespace Sidequest
 
         }
 
-        private void Button_Exit(object sender, RoutedEventArgs e)
+        private void ToggleSettings(object sender, RoutedEventArgs e)
+        {
+            if (areSettingsOpen)
+            {
+                SettingsGrid.Visibility = Visibility.Collapsed;
+                MainGrid.Visibility = Visibility.Visible;
+                areSettingsOpen = false;
+                return;
+            }
+            else
+            {
+                SettingsGrid.Visibility = Visibility.Visible;
+                MainGrid.Visibility = Visibility.Collapsed;
+                areSettingsOpen = true;
+            }
+            
+        }
+
+
+        public Dictionary<int, List<int>> BuildGraph()
+        {
+            var graph = new Dictionary<int, List<int>>();
+
+            foreach (var quest in listQuests)
+            {
+                graph[quest.ID] = new List<int>();
+            }
+
+            using (var connection = new SqliteConnection(dbPath))
+            {
+                connection.Open();
+                var command = connection.CreateCommand();
+                command.CommandText = "SELECT PrerequisiteId, QuestId FROM QuestDependencies";
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        int pId = reader.GetInt32(0);
+                        int qId = reader.GetInt32(1);
+
+                        if (graph.ContainsKey(pId))
+                        {
+                            graph[pId].Add(qId);
+                        }
+                    }
+                }
+            }
+
+            return graph;
+        }
+
+        private int EvaluateQuestUrgency(Quest quest, Dictionary<int, List<int>> graph)
+        {
+            double timeLeft = (quest.Deadline - DateTime.Now).TotalHours;
+            double timeReserve = timeLeft - (quest.TimeEstimate.Hour + (quest.TimeEstimate.Minute / 60.0));
+
+            double timeScore = 1000 / Math.Max(timeReserve, 0.1);
+
+            int neighbors = 0;
+            if (graph.ContainsKey(quest.ID))
+            {
+                neighbors = graph[quest.ID].Count;
+            }
+
+            int blockedQuestsScore = neighbors * 50;
+
+            return (int) (timeScore + blockedQuestsScore);
+        }
+
+        private ObservableCollection<Quest> PlanQuests(ObservableCollection<Quest> quests, Dictionary<int, List<int>> graph)
+        {
+            Dictionary<int, Quest> questLookup = new Dictionary<int, Quest>();
+
+            var comparer = Comparer<int>.Create((a, b) => b.CompareTo(a));
+            PriorityQueue<Quest, int> questHeap = new PriorityQueue<Quest, int>(comparer);
+
+            Dictionary<int, int> inDegree = new Dictionary<int, int>();
+
+            foreach (Quest q in quests)
+            {
+                questLookup[q.ID] = q;
+                inDegree[q.ID] = 0;
+            }
+
+            foreach (var kvp in graph)
+            {
+                foreach (int neighborId in kvp.Value)
+                {
+                    if (inDegree.ContainsKey(neighborId))
+                    {
+                        inDegree[neighborId]++;
+                    }
+                }
+            }
+
+            foreach (Quest q in quests)
+            {
+                if (inDegree[q.ID] == 0)
+                {
+                    questHeap.Enqueue(q, EvaluateQuestUrgency(q, graph));
+                }
+            }
+
+            ObservableCollection<Quest> finalPlan = new ObservableCollection<Quest>();
+
+            while (questHeap.Count > 0)
+            {
+                Quest currQuest = questHeap.Dequeue();
+                finalPlan.Add(currQuest);
+
+                if (graph.ContainsKey(currQuest.ID))
+                {
+                    foreach (int neighborId in graph[currQuest.ID])
+                    {
+                        inDegree[neighborId]--;
+
+                        if (inDegree[neighborId] == 0)
+                        {
+                            Quest unlockedQuest = questLookup[neighborId];
+                            questHeap.Enqueue(unlockedQuest, EvaluateQuestUrgency(unlockedQuest, graph));
+                        }
+                    }
+                }
+            }
+
+            return finalPlan;
+        }
+
+
+        private void StartPlanner(object sender, RoutedEventArgs e)
+        {
+            Dictionary<int, List<int>> graph = BuildGraph();
+
+            ObservableCollection<Quest> newPlan = PlanQuests(listQuests, graph);
+            dayPlan.Clear();
+
+            foreach (Quest q in newPlan)
+            {
+                dayPlan.Add(q);
+            }
+        }
+
+
+        private void QuitApp(object sener, RoutedEventArgs e)
         {
             Environment.Exit(0);
         }
@@ -656,6 +802,7 @@ namespace Sidequest
                 listQuests = new ObservableCollection<Quest>();
                 listFinishedQuests = new ObservableCollection<Quest>();
                 listOverdueQuests = new ObservableCollection<Quest>();
+                dayPlan = new ObservableCollection<Quest>();
                 this.DataContext = this;
 
                 var desktopWorkingArea = SystemParameters.WorkArea;
