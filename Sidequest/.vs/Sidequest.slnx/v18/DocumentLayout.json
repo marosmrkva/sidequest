@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "C:\\Users\\matus\\sidequest\\Sidequest\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{D088F269-0AD2-AF7E-9B4E-06457D03A34A}|Sidequest\\Sidequest.csproj|c:\\users\\matus\\sidequest\\sidequest\\sidequest\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D088F269-0AD2-AF7E-9B4E-06457D03A34A}|Sidequest\\Sidequest.csproj|solutionrelative:sidequest\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{D088F269-0AD2-AF7E-9B4E-06457D03A34A}|Sidequest\\Sidequest.csproj|c:\\users\\matus\\sidequest\\sidequest\\sidequest\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{D088F269-0AD2-AF7E-9B4E-06457D03A34A}|Sidequest\\Sidequest.csproj|solutionrelative:sidequest\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D088F269-0AD2-AF7E-9B4E-06457D03A34A}|Sidequest\\Sidequest.csproj|c:\\users\\matus\\sidequest\\sidequest\\sidequest\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D088F269-0AD2-AF7E-9B4E-06457D03A34A}|Sidequest\\Sidequest.csproj|solutionrelative:sidequest\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D088F269-0AD2-AF7E-9B4E-06457D03A34A}|Sidequest\\Sidequest.csproj|c:\\users\\matus\\sidequest\\sidequest\\sidequest\\quest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -22,17 +22,17 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "MainWindow.xaml.cs",
               "DocumentMoniker": "C:\\Users\\matus\\sidequest\\Sidequest\\Sidequest\\MainWindow.xaml.cs",
               "RelativeDocumentMoniker": "Sidequest\\MainWindow.xaml.cs",
               "ToolTip": "C:\\Users\\matus\\sidequest\\Sidequest\\Sidequest\\MainWindow.xaml.cs",
               "RelativeToolTip": "Sidequest\\MainWindow.xaml.cs",
-              "ViewState": "AgIAACkDAAAAAAAAAAAWwEoDAABpAAAAAAAAAA==",
+              "ViewState": "AgIAACMDAAAAAAAAAAAWwEoDAABpAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-03-19T19:24:37.911Z",
               "IsPinned": true,
@@ -60,12 +60,11 @@
               "RelativeToolTip": "Sidequest\\Quest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAyAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-22T21:30:48.481Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-03-22T21:30:48.481Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "MainWindow.xaml",
               "DocumentMoniker": "C:\\Users\\matus\\sidequest\\Sidequest\\Sidequest\\MainWindow.xaml",
               "RelativeDocumentMoniker": "Sidequest\\MainWindow.xaml",

@@ -139,8 +139,7 @@
         <Grid>
 
             <Grid x:Name="SettingsGrid"
-                  Visibility="Collapsed"
-                  Background="#121212">
+                  Visibility="Collapsed">
 
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
