@@ -150,12 +150,18 @@
 
                 <Grid Grid.Row="0" Margin="10,10,10,10">
                     <Button Style="{Binding}" Background="#2a2a2a" BorderThickness="0" Cursor="Hand" 
-                            Width="150" Height="25" Click="StartPlanner">
+                            Width="150" Height="25" Click="StartPlanner" Margin="0,0,0,50">
                         <TextBlock Text="Run Quest Planner" Foreground="#a0a0a0" FontWeight="Bold"/>
                     </Button>
 
+                    <TextBlock Text="Total time for work today:" Background="#121212" Foreground="#a0a0a0" Margin="49,50,0,0"/>
+                    <TextBox x:Name="WorkTimeInput" Text="06:00" TextAlignment="Center" Background="#2a2a2a" Foreground="#a0a0a0" Width="45" Height="20" Margin="50,30,0,0"/>
+
+                    <TextBlock Text="Short breaks:" Background="#121212" Foreground="#a0a0a0" Margin="115,75,0,0"/>
+                    <TextBox x:Name="BreaksCountInput" Text="2" TextAlignment="Center" Background="#2a2a2a" Foreground="#a0a0a0" Width="45" Margin="50,75,0,0"/>
+
                     <Button Style="{DynamicResource ButtonStyle1}" Background="#a0a0a0" BorderThickness="0" Cursor="Hand"
-                            Height="15" Width="15" HorizontalAlignment="Right" Margin="0,0,5,0" Click="ToggleSettings">
+                            Height="15" Width="15" HorizontalAlignment="Right" Margin="0,0,5,68" Click="ToggleSettings">
                         <Path Data="M0,7 H14 M7,0 V14" Stroke="Black" StrokeThickness="2" 
                               HorizontalAlignment="Center" VerticalAlignment="Top" Width="5" Height="5"/>
                     </Button>
@@ -173,7 +179,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding QuestName}" Foreground="White" FontWeight="Bold" FontSize="14" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding QuestName}" Foreground="#a0a0a0" FontWeight="Bold" FontSize="14" TextWrapping="Wrap"/>
                                     <TextBlock Text="{Binding Deadline}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
                                     <TextBlock x:Name="QuestTimeEstimateTextBox" Visibility="Collapsed" Text="{Binding TimeEstimate, StringFormat='Estimated time: {0:HH:mm}'}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>
                                     <TextBlock x:Name="QuestContentsTextBox" Visibility="Collapsed" Text="{Binding QuestContents}" Foreground="#a0a0a0" FontSize="14" Margin="0,3,0,0"/>

@@ -30,9 +30,9 @@
               "Title": "MainWindow.xaml.cs",
               "DocumentMoniker": "C:\\Users\\matus\\sidequest\\Sidequest\\Sidequest\\MainWindow.xaml.cs",
               "RelativeDocumentMoniker": "Sidequest\\MainWindow.xaml.cs",
-              "ToolTip": "C:\\Users\\matus\\sidequest\\Sidequest\\Sidequest\\MainWindow.xaml.cs",
-              "RelativeToolTip": "Sidequest\\MainWindow.xaml.cs",
-              "ViewState": "AgIAAPUCAAAAAAAAAAAlwA0DAAANAAAAAAAAAA==",
+              "ToolTip": "C:\\Users\\matus\\sidequest\\Sidequest\\Sidequest\\MainWindow.xaml.cs*",
+              "RelativeToolTip": "Sidequest\\MainWindow.xaml.cs*",
+              "ViewState": "AgIAACkDAAAAAAAAAAAWwDUDAAB6AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-03-19T19:24:37.911Z",
               "IsPinned": true,
@@ -60,7 +60,8 @@
               "RelativeToolTip": "Sidequest\\Quest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAyAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-22T21:30:48.481Z"
+              "WhenOpened": "2026-03-22T21:30:48.481Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",

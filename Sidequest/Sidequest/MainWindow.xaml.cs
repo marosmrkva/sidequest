@@ -360,7 +360,7 @@ namespace Sidequest
                 }
                 else
                 {
-                    System.Windows.MessageBox.Show("Invalid time format, use hh:mm format.");
+                    System.Windows.MessageBox.Show("Invalid time format in deadline input, use HH:mm format.");
                     return;
                 }
 
@@ -379,7 +379,7 @@ namespace Sidequest
 
             if (!TimeOnly.TryParse(NewQuestTimeEstimate.Text, out TimeOnly selectedTimeEstimate))
             {
-                System.Windows.MessageBox.Show("Invalid time format, use hh:mm format.");
+                System.Windows.MessageBox.Show("Invalid time format in time estimate input, use HH:mm format.");
                 return;
             }
 
@@ -429,7 +429,7 @@ namespace Sidequest
 
                     if (CheckForCycles(QuestToEdit.ID, newDependencies))
                     {
-                        System.Windows.MessageBox.Show("Invalid dependencies create a cycle, fix to continue.");
+                        System.Windows.MessageBox.Show("Invalid dependencies, you created a cycle, fix to continue.");
                         return;
                     }
 
@@ -502,6 +502,7 @@ namespace Sidequest
             }
 
             listQuests.Remove(QuestToFinish);
+            dayPlan.Remove(QuestToFinish);
             listFinishedQuests.Add(QuestToFinish);
 
             CheckDeadlines();
@@ -530,6 +531,7 @@ namespace Sidequest
             listFinishedQuests.Add(QuestToFinish);
         }
 
+        
         private void RemoveQuest(object sender, RoutedEventArgs e)
         {
             Button pressedButton = sender as Button;
@@ -590,6 +592,7 @@ namespace Sidequest
                 await Task.Delay(5000);
                 canResize = false;
                 MainGrid.Visibility = Visibility.Collapsed;
+                SettingsGrid.Visibility = Visibility.Collapsed;
             }
 
             canResize = true;
@@ -600,7 +603,17 @@ namespace Sidequest
             animateProperty(Window.LeftProperty, _anchorRight - targetSize);
             animateProperty(Window.TopProperty, _anchorBottom - targetSize);
 
-            if (canResize && targetSize == 400) MainGrid.Visibility = Visibility.Visible;
+            if (canResize && targetSize == 400)
+            {
+                if (areSettingsOpen)
+                {
+                    SettingsGrid.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    MainGrid.Visibility = Visibility.Visible;
+                }
+            }
 
             Thread.Sleep(250);
         }
@@ -718,15 +731,44 @@ namespace Sidequest
 
             Dictionary<int, int> inDegree = new Dictionary<int, int>();
 
+            int minutesSinceBreak = 0;
+            int minutesSinceStart = 0;
+            TimeOnly totalWorkTime;
+            int totalWorkMinutes = 0;
+            int totalBreaks;
+            int minutesUntilBreak;
+
+            if (TimeOnly.TryParse(WorkTimeInput.Text, out totalWorkTime))
+            {
+                totalWorkMinutes = (totalWorkTime.Hour * 60) + totalWorkTime.Minute;
+            }
+            else
+            {
+                System.Windows.MessageBox.Show("Invalid time format in work time input box, use HH:mm.");
+                return dayPlan;
+            }
+
+            if (int.TryParse(BreaksCountInput.Text, out totalBreaks))
+            {
+                minutesUntilBreak = totalWorkMinutes / (totalBreaks + 1);
+            }
+            else
+            {
+                System.Windows.MessageBox.Show("Invalid input, number of breaks to schedule is not an integer.");
+                return dayPlan;
+            }
+
+            
+
             foreach (Quest q in quests)
             {
                 questLookup[q.ID] = q;
                 inDegree[q.ID] = 0;
             }
 
-            foreach (var kvp in graph)
+            foreach (var q in graph)
             {
-                foreach (int neighborId in kvp.Value)
+                foreach (int neighborId in q.Value)
                 {
                     if (inDegree.ContainsKey(neighborId))
                     {
@@ -748,7 +790,46 @@ namespace Sidequest
             while (questHeap.Count > 0)
             {
                 Quest currQuest = questHeap.Dequeue();
+                int currQuestDuration = (currQuest.TimeEstimate.Hour * 60) + currQuest.TimeEstimate.Minute;
+
+                if (minutesSinceStart + currQuestDuration > totalWorkMinutes + 20)
+                {
+                    continue;
+                }
+
+                if (minutesSinceBreak > 0 && totalBreaks > 0 && (minutesSinceBreak + currQuestDuration > minutesUntilBreak))
+                {
+                    int distNow = minutesUntilBreak - minutesSinceBreak;
+                    int distAfter = (minutesSinceBreak + currQuestDuration) - minutesUntilBreak;
+
+                    if (distNow <= distAfter)
+                    {    
+                        Quest breakQuest = new Quest();
+                        breakQuest.QuestName = "20-minute break";                
+                        breakQuest.QuestContents = "Take a break, get a drink or something to eat and relax :)";
+                        breakQuest.TimeEstimate = new TimeOnly(0, 20);
+
+                        finalPlan.Add(breakQuest);
+                        totalBreaks--;
+                        minutesSinceBreak = 0;
+                    }
+                }
+
                 finalPlan.Add(currQuest);
+                minutesSinceBreak += currQuestDuration;
+                minutesSinceStart += currQuestDuration;
+
+                if (totalBreaks > 0 && minutesSinceBreak >= minutesUntilBreak && minutesSinceStart + 20 < totalWorkMinutes)
+                {
+                    Quest breakQuest = new Quest();
+                    breakQuest.QuestName = "20-minute break";
+                    breakQuest.QuestContents = "Take a break, get a drink or something to eat and relax :)";
+                    breakQuest.TimeEstimate = new TimeOnly(0, 20);
+
+                    finalPlan.Add(breakQuest);
+                    totalBreaks--;
+                    minutesSinceBreak = 0;
+                }
 
                 if (graph.ContainsKey(currQuest.ID))
                 {
